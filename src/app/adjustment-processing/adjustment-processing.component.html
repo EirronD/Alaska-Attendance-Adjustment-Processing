@@ -1,0 +1,226 @@
+<style>
+    .autocomplete-dropdown {
+    position: absolute;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0.25rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.list-group-item {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: #f1f1f1;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+button {
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+</style>
+<form [formGroup]="documentForm">
+    <c-container>
+        <c-row class="mt-4">
+            <c-card class="mb-4 shadow-sm rounded">
+                <c-card-header class="mt-2 mb-2 bg-primary text-white rounded">
+                    <strong>Attendance Adjustment Processing</strong>
+                </c-card-header>
+                <c-card class="mb-2">
+                    <c-card-body>
+                        <c-col [sm]="12">
+                            <c-row class="mb-4"> <!-- Companies -->
+                                <label [sm]="4" cCol cLabel="col" for="company" sizing="sm" class="text-sm">
+                                    Company Name
+                                </label>
+                                <c-col [sm]="8" style="position: relative;">
+                                    <c-input-group sizing="sm">
+                                        <input type="text" class="form-control rounded-pill shadow-sm" 
+                                            [ngClass]="{
+                                                'border-danger': inputStateCompany === 'danger',
+                                                'border-warning': inputStateCompany === 'warning'
+                                            }" 
+                                            formControlName="company" (input)="onCompanyInput($event)"
+                                            (focus)="onInputFocus($event, 'company')"
+                                            (blur)="onInputBlur($event, 'company')" 
+                                            autocomplete="off" placeholder="Type to search..." />
+
+                                        <!-- Autocomplete Dropdown for Companies -->
+                                        <div *ngIf="isCompanyDropdownVisible" class="autocomplete-dropdown">
+                                            <ul class="list-group" sizing="sm">
+                                                <li *ngFor="let o of filteredCompanies" class="list-group-item"
+                                                    (click)="onCompanySelect(o.name, o)">
+                                                    {{ o.name }}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </c-input-group>
+                                </c-col>
+                            </c-row>
+
+                            <c-row class="mb-4"> <!-- Payroll Period -->
+                                <label [sm]="4" cCol cLabel="col" for="payrollperiod" sizing="sm" class="text-sm">
+                                    Payroll Period
+                                </label>
+                                <c-col [sm]="8" style="position: relative;">
+                                    <c-input-group sizing="sm">
+                                        <input type="text" class="form-control rounded-pill shadow-sm" 
+                                            [ngClass]="{
+                                                'border-danger': inputStatePeriod === 'danger',
+                                                'border-warning': inputStatePeriod === 'warning'
+                                            }" 
+                                            formControlName="payrollperiod" (input)="onPeriodInput($event)"
+                                            (focus)="onInputFocus($event, 'period')"
+                                            (blur)="onInputBlur($event, 'period')" 
+                                            autocomplete="off" placeholder="Type to search..." />
+
+                                        <!-- Autocomplete Dropdown for Payroll Periods -->
+                                        <div *ngIf="isPeriodDropdownVisible" class="autocomplete-dropdown">
+                                            <ul class="list-group" sizing="sm">
+                                                <li *ngFor="let o of filteredPeriods" class="list-group-item"
+                                                    (click)="onPeriodSelect(o.name, o)">
+                                                    {{ o.name }}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </c-input-group>
+                                </c-col>
+                            </c-row>
+
+                            <c-row class="mb-4"> <!-- Employees -->
+                                <label [sm]="4" cCol cLabel="col" for="employee" sizing="sm" class="text-sm">
+                                    Employee Name
+                                </label>
+                                <c-col [sm]="8" style="position: relative;">
+                                    <c-input-group sizing="sm">
+                                        <input type="text" class="form-control rounded-pill shadow-sm" 
+                                            [ngClass]="{
+                                                'border-danger': inputStateEmployee === 'danger',
+                                                'border-warning': inputStateEmployee === 'warning'
+                                            }" 
+                                            formControlName="employee" (input)="onEmployeeInput($event)"
+                                            (focus)="onInputFocus($event, 'employee')"
+                                            (blur)="onInputBlur($event, 'employee')" 
+                                            autocomplete="off" placeholder="Type to search..." />
+
+                                        <!-- Autocomplete Dropdown for Employees -->
+                                        <div *ngIf="isEmployeeDropdownVisible" class="autocomplete-dropdown">
+                                            <ul class="list-group" sizing="sm">
+                                                <li *ngFor="let o of filteredEmployees" class="list-group-item"
+                                                    (click)="onEmployeeSelect(o.full_name, o)">
+                                                    {{ o.full_name }}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </c-input-group>
+                                </c-col>
+                            </c-row>
+
+                        </c-col>
+                        <button cButton (click)="ProcessData({
+                            employee: documentForm.get('employee')?.value!,
+                            company: documentForm.get('company')?.value!,
+                            payrollperiod: documentForm.get('payrollperiod')?.value!
+                          })" 
+                          color="success" class="rounded-pill shadow-sm">Process Data</button>
+                    </c-card-body>
+                </c-card>
+
+                <c-card class="mb-2">
+                    <c-card-body>
+                        <table [cBorder]="1" borderColor="primary" bordered cTable class="table table-striped">
+                            <thead>
+                                <tr class="table-primary">
+                                    <th scope="col">Application ID</th>
+                                    <th scope="col">EE No</th>
+                                    <th scope="col">Employee</th>
+                                    <th scope="col">Target Date</th>
+                                    <th scope="col">Affected Period</th>
+                                    <th scope="col">Application</th>
+                                    <th scope="col">Date Approved</th>
+                                    <th scope="col">Last Cutoff Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let o of applicationList">
+                                    <td>{{ o.name }}</td>
+                                    <td>{{ o.employee }}</td>
+                                    <td>{{ o.employee_name }}</td>
+                                    <td>{{ o.target_date | date: "MM-dd-yyyy" }}</td>
+                                    <td>{{ o.prev_period }}</td>
+                                    <td>{{ o.application }}</td>
+                                    <td>{{ o.approved_on | date: "MM-dd-yyyy" }}</td>
+                                    <td>{{ o.last_cutoff_approval | date: "MM-dd-yyyy" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </c-card-body>
+                </c-card>
+
+                <c-card class="mb-2">
+                    <c-card-body>
+                        <table [cBorder]="1" borderColor="primary" bordered cTable class="table table-striped">
+                            <thead>
+                                <tr class="table-primary">
+                                    <th scope="col">EE No</th>
+                                    <th scope="col">Employee</th>
+                                    <th scope="col">Work Shift</th>
+                                    <th scope="col">Target Date</th>
+                                    <th scope="col">Card In</th>
+                                    <th scope="col">Card Out</th>
+                                    <th scope="col">Actual Work Hours</th>
+                                    <th scope="col">Work Hours</th>
+                                    <th scope="col">OT</th>
+                                    <th scope="col">OT ND</th>
+                                    <th scope="col">OT EX</th>
+                                    <th scope="col">Late</th>
+                                    <th scope="col">Undertime</th>
+                                    <th scope="col">ND</th>
+                                    <th scope="col">T2 ND</th>
+                                    <th scope="col">T1 ND</th>
+                                    <th scope="col">Remarks</th>
+                                    <th scope="col">Post Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let o of adjustmentList">
+                                    <td>{{ o.employee }}</td>
+                                    <td>{{ o.employee_name }}</td>
+                                    <td>{{ o.work_shift }}</td>
+                                    <td>{{ o.target_date | date: "MM-dd-yyyy" }}</td>
+                                    <td>{{ o.card_in | date: "MM-dd-yyyy HH:mm:ss" }}</td>
+                                    <td>{{ o.card_out | date: "MM-dd-yyyy HH:mm:ss" }}</td>
+                                    <td>{{ o.actual_work_hours | number : "1.2-2" }}</td>
+                                    <td>{{ o.work_hours | number : "1.2-2" }}</td>
+                                    <td>{{ o.overtime | number : "1.2-2" }}</td>
+                                    <td>{{ o.overtime_nd | number : "1.2-2" }}</td>
+                                    <td>{{ o.overtime_ex | number : "1.2-2" }}</td>
+                                    <td>{{ o.late | number : "1.2-2" }}</td>
+                                    <td>{{ o.undertime | number : "1.2-2" }}</td>
+                                    <td>{{ o.night_diff | number : "1.2-2" }}</td>
+                                    <td>{{ o.night_diff_t2 | number : "1.2-2" }}</td>
+                                    <td>{{ o.night_diff_t1 | number : "1.2-2" }}</td>
+                                    <td>{{ o.links }}</td>
+                                    <td>{{ o.errorMsg }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </c-card-body>
+                </c-card>
+            </c-card>
+        </c-row>
+    </c-container>
+</form>

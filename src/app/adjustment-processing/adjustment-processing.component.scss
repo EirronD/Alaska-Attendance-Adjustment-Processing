@@ -1,0 +1,20 @@
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%; /* Places the dropdown directly below the input */
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background-color: white;
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  
+  .list-group-item {
+    cursor: pointer;
+    padding: 8px;
+  }
+  
+  .list-group-item:hover {
+    background-color: #f0f0f0;
+  }

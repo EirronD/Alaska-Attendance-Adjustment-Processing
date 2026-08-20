@@ -1,0 +1,16 @@
+{
+
+  "/api-pn": {
+    "target": "http://35.223.12.115:5353",
+    "secure": false,
+    "changeOrigin": false,
+    "logLevel": "debug"
+  },
+    "/api": {
+      "target": "https://osi-test.in:30044",
+      "secure": false,
+      "changeOrigin": false,
+      "logLevel": "debug"
+    }
+
+  }
